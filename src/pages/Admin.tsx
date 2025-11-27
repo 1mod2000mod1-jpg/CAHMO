@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-// تأكد أن هذه المكونات موجودة لديك بالفعل، إذا لم تكن موجودة عليك إنشاؤها أو تثبيتها
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+// تم إزالة Select/Alert لأنهما لم يُستخدما في الكود الأصلي وتسببا في أخطاء
 import { Users, TrendingUp, DollarSign, CheckCircle, XCircle, Clock, Trash2, LineChart, Lock } from 'lucide-react';
 
 // 1. تعريف كائن window.storage ليفهمه TypeScript
@@ -45,17 +45,14 @@ export default function Admin() {
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   
-  // 3. تحديد نوع المصفوفات هنا لحل مشكلة never[]
+  // تحديد نوع المصفوفات لحل أخطاء TS2345 و TS2339
   const [users, setUsers] = useState<User[]>([]);
   const [investments, setInvestments] = useState<Investment[]>([]);
-  
-  // المتغيرات غير المستخدمة تم حذفها لتنظيف الأخطاء
-  // const [selectedInvestment, setSelectedInvestment] = useState<Investment | null>(null);
   
   const [btcPrice, setBtcPrice] = useState(45000);
   const [priceHistory, setPriceHistory] = useState<number[]>([]);
   
-  // هذه المتغيرات يتم استخدامها عند التحديث
+  // استخدام المتغيرات مباشرة في الدوال
   const multiplier = '1.6'; 
   const tradeType = 'single';
 
@@ -88,7 +85,6 @@ export default function Admin() {
 
   const loadData = async () => {
     try {
-      // التحقق من وجود window.storage قبل استخدامه لتجنب توقف التطبيق
       if (!window.storage) {
         console.warn("Storage API not found on window object");
         return;
@@ -186,6 +182,7 @@ export default function Admin() {
   const activeInvestments = investments.filter(inv => inv.status === 'active').length;
   const pendingInvestments = investments.filter(inv => inv.status === 'pending').length;
 
+  // صفحة تسجيل الدخول للأدمن
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-black to-purple-900">
@@ -204,7 +201,8 @@ export default function Admin() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="أدخل كلمة المرور"
                   className="mt-2"
-                  onKeyDown={(e) => {
+                  // 3. تم إضافة نوع الحدث هنا لحل مشكلة TS7006
+                  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                     if (e.key === 'Enter') {
                       if (password === 'admin123') {
                         setIsAuthenticated(true);
@@ -237,6 +235,7 @@ export default function Admin() {
     );
   }
 
+  // لوحة التحكم الرئيسية
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-gray-100 p-8">
       <div className="max-w-7xl mx-auto">
