@@ -329,5 +329,5 @@ export default function Admin() {
                         </Badge>
                         <span className="text-sm text-gray-500">ID: {investment.id.slice(0, 8)}</span>
                       </div>
-                    );
-                   }
+                      );
+                      }
