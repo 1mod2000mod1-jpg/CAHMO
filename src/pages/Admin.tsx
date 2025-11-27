@@ -317,17 +317,112 @@ export default function Admin() {
                     <CardContent className="p-6">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-4">
-                        <Badge className={
-                          investment.status === 'active' ? 'bg-blue-500' :
-                          investment.status === 'completed' ? 'bg-green-500' :
-                          investment.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500'
-                        }>
-                          {investment.status === 'active' ? '🔵 نشط' :
-                           investment.status === 'completed' ? '✅ مكتمل' :
-                           investment.status === 'pending' ? '⏳ قيد المراجعة' : '❌ ملغي'}
-                        </Badge>
-                        <span className="text-sm text-gray-500">ID: {investment.id.slice(0, 8)}</span>
+                          <div className="flex items-center gap-3 mb-4">
+                            <Badge className={
+                              investment.status === 'active' ? 'bg-blue-500' :
+                              investment.status === 'completed' ? 'bg-green-500' :
+                              investment.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500'
+                            }>
+                              {investment.status === 'active' ? '🔵 نشط' :
+                               investment.status === 'completed' ? '✅ مكتمل' :
+                               investment.status === 'pending' ? '⏳ قيد المراجعة' : '❌ ملغي'}
+                            </Badge>
+                            <span className="text-sm text-gray-500">ID: {investment.id.slice(0, 8)}</span>
+                          </div>
+
+                          <div className="space-y-2">
+                            <h3 className="text-xl font-bold">
+                                {users.find(u => u.id === investment.userId)?.name || 'مستخدم غير معروف'}
+                            </h3>
+                            <p className="text-gray-600">
+                                المبلغ المستثمر: <span className="text-green-600 font-bold">${investment.amount}</span>
+                            </p>
+                            <p className="text-xs text-gray-400">
+                                {new Date(investment.date).toLocaleString('ar-EG')}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* أزرار التحكم */}
+                        <div className="flex flex-col gap-2">
+                            {investment.status === 'pending' && (
+                                <Button 
+                                    onClick={() => approveInvestment(investment.id)}
+                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                >
+                                    <CheckCircle className="w-4 h-4 ml-2" /> موافقة
+                                </Button>
+                            )}
+
+                            {investment.status === 'active' && (
+                                <div className="flex gap-2">
+                                    <Button 
+                                        onClick={() => updateInvestmentStatus(investment.id, 'completed', multiplier)}
+                                        className="bg-green-600 hover:bg-green-700 text-white"
+                                    >
+                                        <TrendingUp className="w-4 h-4 ml-2" /> ربح
+                                    </Button>
+                                    <Button 
+                                        onClick={() => updateInvestmentStatus(investment.id, 'cancelled', '0')}
+                                        variant="destructive"
+                                    >
+                                        <XCircle className="w-4 h-4 ml-2" /> خسارة
+                                    </Button>
+                                </div>
+                            )}
+
+                            <Button 
+                                onClick={() => deleteInvestment(investment.id)}
+                                variant="outline"
+                                className="text-red-600 hover:bg-red-50 border-red-200"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </Button>
+                        </div>
                       </div>
-                      );
-                      }
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </TabsContent>
+
+          {/* إدارة المستخدمين */}
+          <TabsContent value="users">
+            <Card>
+                <CardHeader>
+                    <CardTitle>قائمة المستخدمين المسجلين</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                        {users.length === 0 ? (
+                            <p className="text-center text-gray-500">لا يوجد مستخدمين</p>
+                        ) : (
+                            users.map((user, i) => (
+                                <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold">
+                                            {user.name ? user.name[0].toUpperCase() : 'U'}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold">{user.name}</p>
+                                            <p className="text-sm text-gray-500">{user.email}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="text-sm font-mono bg-gray-200 px-2 py-1 rounded">
+                                            {user.id ? user.id.slice(0,8) : 'N/A'}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
