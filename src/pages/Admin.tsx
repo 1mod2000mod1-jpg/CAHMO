@@ -316,3 +316,16 @@ export default function Admin() {
                   <Card key={investment.id} className="border-2 hover:border-purple-400 transition shadow-lg">
                     <CardContent className="p-6">
                       <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-4">
+                        <Badge className={
+                          investment.status === 'active' ? 'bg-blue-500' :
+                          investment.status === 'completed' ? 'bg-green-500' :
+                          investment.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500'
+                        }>
+                          {investment.status === 'active' ? '🔵 نشط' :
+                           investment.status === 'completed' ? '✅ مكتمل' :
+                           investment.status === 'pending' ? '⏳ قيد المراجعة' : '❌ ملغي'}
+                        </Badge>
+                        <span className="text-sm text-gray-500">ID: {investment.id.slice(0, 8)}</span>
+                      </div>
