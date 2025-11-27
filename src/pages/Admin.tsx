@@ -1,24 +1,63 @@
 import React, { useState, useEffect } from 'react';
+// تأكد أن هذه المكونات موجودة لديك بالفعل، إذا لم تكن موجودة عليك إنشاؤها أو تثبيتها
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, TrendingUp, DollarSign, CheckCircle, XCircle, Clock, Edit, Trash2, LineChart, Lock } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Users, TrendingUp, DollarSign, CheckCircle, XCircle, Clock, Trash2, LineChart, Lock } from 'lucide-react';
+
+// 1. تعريف كائن window.storage ليفهمه TypeScript
+declare global {
+  interface Window {
+    storage: {
+      list: (prefix: string, boolean: boolean) => Promise<{ keys: string[] }>;
+      get: (key: string, boolean: boolean) => Promise<{ value: string } | null>;
+      set: (key: string, value: string, boolean: boolean) => Promise<void>;
+      delete: (key: string, boolean: boolean) => Promise<void>;
+    };
+  }
+}
+
+// 2. تعريف شكل بيانات المستخدم والاستثمار
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  [key: string]: any;
+}
+
+interface Investment {
+  id: string;
+  userId: string;
+  amount: number;
+  status: 'active' | 'pending' | 'completed' | 'cancelled';
+  date: string;
+  multiplier?: number;
+  actualReturn?: number;
+  tradeType?: string;
+  completedAt?: string;
+  startDate?: string;
+}
 
 export default function Admin() {
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [users, setUsers] = useState([]);
-  const [investments, setInvestments] = useState([]);
-  const [selectedInvestment, setSelectedInvestment] = useState(null);
+  
+  // 3. تحديد نوع المصفوفات هنا لحل مشكلة never[]
+  const [users, setUsers] = useState<User[]>([]);
+  const [investments, setInvestments] = useState<Investment[]>([]);
+  
+  // المتغيرات غير المستخدمة تم حذفها لتنظيف الأخطاء
+  // const [selectedInvestment, setSelectedInvestment] = useState<Investment | null>(null);
+  
   const [btcPrice, setBtcPrice] = useState(45000);
-  const [priceHistory, setPriceHistory] = useState([]);
-  const [multiplier, setMultiplier] = useState('1.6');
-  const [tradeType, setTradeType] = useState('single');
+  const [priceHistory, setPriceHistory] = useState<number[]>([]);
+  
+  // هذه المتغيرات يتم استخدامها عند التحديث
+  const multiplier = '1.6'; 
+  const tradeType = 'single';
 
   // شارت البتكوين المباشر
   useEffect(() => {
@@ -49,11 +88,17 @@ export default function Admin() {
 
   const loadData = async () => {
     try {
+      // التحقق من وجود window.storage قبل استخدامه لتجنب توقف التطبيق
+      if (!window.storage) {
+        console.warn("Storage API not found on window object");
+        return;
+      }
+
       const usersResult = await window.storage.list('user:', true);
       const investmentsResult = await window.storage.list('investment:', true);
       
       if (usersResult?.keys) {
-        const loadedUsers = [];
+        const loadedUsers: User[] = [];
         for (const key of usersResult.keys) {
           try {
             const userData = await window.storage.get(key, true);
@@ -64,7 +109,7 @@ export default function Admin() {
       }
 
       if (investmentsResult?.keys) {
-        const loadedInvestments = [];
+        const loadedInvestments: Investment[] = [];
         for (const key of investmentsResult.keys) {
           try {
             const invData = await window.storage.get(key, true);
@@ -78,13 +123,14 @@ export default function Admin() {
     }
   };
 
-  const updateInvestmentStatus = async (investmentId, newStatus, mult) => {
+  const updateInvestmentStatus = async (investmentId: string, newStatus: Investment['status'], mult: string) => {
     try {
+      if (!window.storage) return;
       const investment = investments.find(inv => inv.id === investmentId);
       if (!investment) return;
 
       const finalReturn = investment.amount * parseFloat(mult);
-      const updatedInvestment = {
+      const updatedInvestment: Investment = {
         ...investment,
         status: newStatus,
         actualReturn: finalReturn,
@@ -95,7 +141,6 @@ export default function Admin() {
 
       await window.storage.set(`investment:${investmentId}`, JSON.stringify(updatedInvestment), true);
       setInvestments(prev => prev.map(inv => inv.id === investmentId ? updatedInvestment : inv));
-      setSelectedInvestment(null);
       alert('تم تحديث الاستثمار بنجاح!');
     } catch (error) {
       console.error('خطأ في تحديث الاستثمار:', error);
@@ -103,10 +148,12 @@ export default function Admin() {
     }
   };
 
-  const deleteInvestment = async (investmentId) => {
+  const deleteInvestment = async (investmentId: string) => {
+    // eslint-disable-next-line no-restricted-globals
     if (!confirm('هل أنت متأكد من حذف هذا الاستثمار؟')) return;
     
     try {
+      if (!window.storage) return;
       await window.storage.delete(`investment:${investmentId}`, true);
       setInvestments(prev => prev.filter(inv => inv.id !== investmentId));
       alert('تم الحذف بنجاح');
@@ -115,12 +162,13 @@ export default function Admin() {
     }
   };
 
-  const approveInvestment = async (investmentId) => {
+  const approveInvestment = async (investmentId: string) => {
     try {
+      if (!window.storage) return;
       const investment = investments.find(inv => inv.id === investmentId);
       if (!investment) return;
 
-      const updatedInvestment = {
+      const updatedInvestment: Investment = {
         ...investment,
         status: 'active',
         startDate: new Date().toISOString()
@@ -134,11 +182,10 @@ export default function Admin() {
     }
   };
 
-  const totalInvested = investments.reduce((sum, inv) => sum + inv.amount, 0);
+  const totalInvested = investments.reduce((sum, inv) => sum + (inv.amount || 0), 0);
   const activeInvestments = investments.filter(inv => inv.status === 'active').length;
   const pendingInvestments = investments.filter(inv => inv.status === 'pending').length;
 
-  // صفحة تسجيل الدخول للأدمن
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-black to-purple-900">
@@ -157,7 +204,7 @@ export default function Admin() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="أدخل كلمة المرور"
                   className="mt-2"
-                  onKeyPress={(e) => {
+                  onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       if (password === 'admin123') {
                         setIsAuthenticated(true);
@@ -190,7 +237,6 @@ export default function Admin() {
     );
   }
 
-  // لوحة التحكم الرئيسية
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-gray-100 p-8">
       <div className="max-w-7xl mx-auto">
